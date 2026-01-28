@@ -165,7 +165,7 @@ def render_detail_view(row: pd.Series):
     # sales_point を最優先（H3で強調）
     st.markdown("### セールスポイント（接客トーク）")
     # 赤字＋太字で視認性UP
-    points = row["sales_point"].replace("\n", "<br>")
+    points = row["sales_point"].replace("\\n", "<br>").replace("\n", "<br>")
     st.markdown(f'<div class="cag-sales">{points}</div>', unsafe_allow_html=True)
 
     st.markdown("#### ")
