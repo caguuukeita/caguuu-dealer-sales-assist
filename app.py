@@ -218,8 +218,19 @@ def main():
         st.stop()
 
     # カテゴリ一覧（上部スイッチ用）
-    categories = sorted([c for c in df_all["category"].unique().tolist() if c.strip()])
-    categories.insert(0, "全商品")  # ← これを追加（リストの先頭に入れる）
+    raw_cats = [c for c in df_all["category"].unique().tolist() if c.strip()]
+    
+    # 「その他」があれば一旦リストから外す
+    has_other = "その他" in raw_cats
+    if has_other:
+        raw_cats.remove("その他")
+    
+    # 残りをソートして、「全商品」を先頭、「その他」を最後尾に追加
+    categories = sorted(raw_cats)
+    categories.insert(0, "全商品")
+    
+    if has_other:
+        categories.append("その他")
 
     init_state(categories)
 
