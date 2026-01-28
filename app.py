@@ -190,7 +190,7 @@ def render_product_grid(df: pd.DataFrame):
                 if row['product_code']:
                     st.caption(f"型番: {row['product_code']}")
 
-                st.markdown(f"**価格：{yen(int(row['price']))}**")
+                st.markdown(f"**通常税込価格：{yen(int(row['price']))}**")
             if st.button("詳細・トークを見る", key=f"detail_{idx}"):
                 st.session_state.selected_product_idx = idx
 
