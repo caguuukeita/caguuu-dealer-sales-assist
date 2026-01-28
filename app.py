@@ -105,14 +105,13 @@ CATEGORY_EMOJI = {
 }
 
 def load_products(csv_path: str) -> pd.DataFrame:
-    # variation_text を追加
-    df = pd.read_csv(csv_path, dtype={"category": str, "product_name": str, "variation_text": str, "sales_point": str, "ec_url": str, "image_url": str})
-    # priceは数字/文字どちらでも来る想定
+　  # product_code を追加
+    df = pd.read_csv(csv_path, dtype={"category": str, "product_name": str, "variation_text": str, "sales_point": str, "product_code": str, "ec_url": str, "image_url": str})    # priceは数字/文字どちらでも来る想定
     if "price" in df.columns:
         df["price"] = pd.to_numeric(df["price"], errors="coerce").fillna(0).astype(int)
-    # 欠損対策
-    for col in ["category", "product_name", "variation_text", "sales_point", "ec_url", "image_url"]:
-        if col not in df.columns:
+    # 欠損値埋めリストにも product_code を追加
+    for col in ["category", "product_name", "variation_text", "sales_point", "product_code", "ec_url", "image_url"]:
+      if col not in df.columns:
             df[col] = ""
         df[col] = df[col].fillna("").astype(str)
     return df
@@ -173,8 +172,11 @@ def render_product_grid(df: pd.DataFrame):
                 if row['variation_text'] and row['variation_text'].strip():
                     st.markdown(f'<div class="cag-variation">{row["variation_text"]}</div>', unsafe_allow_html=True)
                 
-                st.markdown(f"**通常税込価格：{yen(int(row['price']))}**")
+                # 商品コードを小さく表示
+                if row['product_code']:
+                    st.caption(f"型番: {row['product_code']}")
 
+                st.markdown(f"**価格：{yen(int(row['price']))}**")
             if st.button("詳細・トークを見る", key=f"detail_{idx}"):
                 st.session_state.selected_product_idx = idx
 
@@ -248,8 +250,12 @@ def main():
     
     # 検索ワードがあるなら、カテゴリボタンを無視して「全商品」から探す
     if query:
-        df = df[df["product_name"].str.contains(query, case=False, na=False)]
-        # ユーザーに分かりやすくメッセージを出す
+        # 商品名 または 商品コード にヒットするものを探す
+        mask = (
+            df["product_name"].str.contains(query, case=False, na=False) | 
+            df["product_code"].str.contains(query, case=False, na=False)
+        )
+        df = df[mask]        # ユーザーに分かりやすくメッセージを出す
         if not df.empty:
             st.success(f"全カテゴリから 「{query}」 を検索しました")
             
