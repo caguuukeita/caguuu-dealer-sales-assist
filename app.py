@@ -79,6 +79,7 @@ img.cag-thumb {
 """
 
 CATEGORY_EMOJI = {
+    "全商品": "🌏",
     "ベッド": "🛏️",
     "ソファ": "🛋️",
     "テーブル": "🪑",  # テーブル専用絵文字が弱いので椅子で代替
@@ -196,6 +197,7 @@ def main():
 
     # カテゴリ一覧（上部スイッチ用）
     categories = sorted([c for c in df_all["category"].unique().tolist() if c.strip()])
+    categories.insert(0, "全商品")  # ← これを追加（リストの先頭に入れる）
 
     init_state(categories)
 
@@ -219,7 +221,7 @@ def main():
             st.success(f"全カテゴリから 「{query}」 を検索しました")
             
     # 検索ワードがない時だけ、カテゴリボタンで絞り込む
-    elif st.session_state.selected_category:
+    elif st.session_state.selected_category and st.session_state.selected_category != "全商品":
         df = df[df["category"] == st.session_state.selected_category]
 
     # 表示順は価格ではなく名前（現場で探しやすい）
