@@ -105,15 +105,29 @@ CATEGORY_EMOJI = {
 }
 
 def load_products(csv_path: str) -> pd.DataFrame:
-　  # product_code を追加
-    df = pd.read_csv(csv_path, dtype={"category": str, "product_name": str, "variation_text": str, "sales_point": str, "product_code": str, "ec_url": str, "image_url": str})    # priceは数字/文字どちらでも来る想定
+    # product_code を明示的に文字列として読み込む
+    df = pd.read_csv(csv_path, dtype={
+        "category": str, 
+        "product_name": str, 
+        "variation_text": str, 
+        "sales_point": str, 
+        "product_code": str, 
+        "ec_url": str, 
+        "image_url": str
+    })
+    
+    # priceは数字/文字どちらでも来る想定
     if "price" in df.columns:
         df["price"] = pd.to_numeric(df["price"], errors="coerce").fillna(0).astype(int)
+
     # 欠損値埋めリストにも product_code を追加
     for col in ["category", "product_name", "variation_text", "sales_point", "product_code", "ec_url", "image_url"]:
-      if col not in df.columns:
+        # 列が存在しない場合は空文字で作成
+        if col not in df.columns:
             df[col] = ""
+        # 【重要】列がある場合もない場合も、必ず文字列型に変換してNaNを消す
         df[col] = df[col].fillna("").astype(str)
+        
     return df
 
 def yen(n: int) -> str:
