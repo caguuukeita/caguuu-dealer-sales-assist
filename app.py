@@ -95,7 +95,7 @@ CATEGORY_EMOJI = {
     "全商品": "🌏",
     "ベッド": "🛏️",
     "ソファ": "🛋️",
-    "テーブル": "🪑",  # テーブル専用絵文字が弱いので椅子で代替
+    "テーブル": "📚",
     "チェア": "🪑",
     "収納": "🧺",
     "デスク": "💻",
@@ -170,7 +170,7 @@ def render_product_grid(df: pd.DataFrame):
                 if row['variation_text'] and row['variation_text'].strip():
                     st.markdown(f'<div class="cag-variation">{row["variation_text"]}</div>', unsafe_allow_html=True)
                 
-                st.markdown(f"**価格：{yen(int(row['price']))}**")
+                st.markdown(f"**通常税込価格：{yen(int(row['price']))}**")
 
             if st.button("詳細・トークを見る", key=f"detail_{idx}"):
                 st.session_state.selected_product_idx = idx
@@ -193,7 +193,7 @@ def render_detail_view(row: pd.Series):
     ec_url = row["ec_url"].strip()
     if ec_url:
         st.markdown(
-            f'<a class="cag-ec-btn" href="{ec_url}" target="_blank" rel="noopener noreferrer">🌐 在庫・詳細ページを開く（EC）</a>',
+            f'<a class="cag-ec-btn" href="{ec_url}" target="_blank" rel="noopener noreferrer">🌐 納期・詳細ページを開く（EC）</a>',
             unsafe_allow_html=True,
         )
     else:
