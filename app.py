@@ -99,6 +99,9 @@ CATEGORY_EMOJI = {
     "チェア": "🪑",
     "収納": "🧺",
     "デスク": "💻",
+    "その他": "🎲",
+    "照明": "💡",
+
 }
 
 def load_products(csv_path: str) -> pd.DataFrame:
