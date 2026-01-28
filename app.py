@@ -75,6 +75,19 @@ img.cag-thumb {
   border-radius: 14px;
   border: 2px solid #11111122;
 }
+
+/* バリエーション情報（補足）のデザイン */
+.cag-variation {
+  font-size: 18px !important;  /* 商品名より少し小さく */
+  color: #555555;              /* 真っ黒ではなく濃いグレー */
+  font-weight: 500;
+  margin-top: -10px;           /* 商品名との距離を詰める */
+  margin-bottom: 8px;
+  background-color: #f0f2f6;   /* 薄い背景色で区分け */
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;       /* 文字の長さだけ背景をつける */
+}
 </style>
 """
 
@@ -89,12 +102,13 @@ CATEGORY_EMOJI = {
 }
 
 def load_products(csv_path: str) -> pd.DataFrame:
-    df = pd.read_csv(csv_path, dtype={"category": str, "product_name": str, "sales_point": str, "ec_url": str, "image_url": str})
+    # variation_text を追加
+    df = pd.read_csv(csv_path, dtype={"category": str, "product_name": str, "variation_text": str, "sales_point": str, "ec_url": str, "image_url": str})
     # priceは数字/文字どちらでも来る想定
     if "price" in df.columns:
         df["price"] = pd.to_numeric(df["price"], errors="coerce").fillna(0).astype(int)
     # 欠損対策
-    for col in ["category", "product_name", "sales_point", "ec_url", "image_url"]:
+    for col in ["category", "product_name", "variation_text", "sales_point", "ec_url", "image_url"]:
         if col not in df.columns:
             df[col] = ""
         df[col] = df[col].fillna("").astype(str)
@@ -151,6 +165,11 @@ def render_product_grid(df: pd.DataFrame):
                 st.image(row["image_url"], width=140, caption="", output_format="auto")
             with right:
                 st.markdown(f"### {row['product_name']}")
+                
+                # バリエーションがある場合のみ表示
+                if row['variation_text'] and row['variation_text'].strip():
+                    st.markdown(f'<div class="cag-variation">{row["variation_text"]}</div>', unsafe_allow_html=True)
+                
                 st.markdown(f"**価格：{yen(int(row['price']))}**")
 
             if st.button("詳細・トークを見る", key=f"detail_{idx}"):
