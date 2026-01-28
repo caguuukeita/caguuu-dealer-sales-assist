@@ -210,11 +210,17 @@ def main():
 
     # フィルタ適用
     df = df_all.copy()
-    if st.session_state.selected_category:
-        df = df[df["category"] == st.session_state.selected_category]
-
+    
+    # 検索ワードがあるなら、カテゴリボタンを無視して「全商品」から探す
     if query:
         df = df[df["product_name"].str.contains(query, case=False, na=False)]
+        # ユーザーに分かりやすくメッセージを出す
+        if not df.empty:
+            st.success(f"全カテゴリから 「{query}」 を検索しました")
+            
+    # 検索ワードがない時だけ、カテゴリボタンで絞り込む
+    elif st.session_state.selected_category:
+        df = df[df["category"] == st.session_state.selected_category]
 
     # 表示順は価格ではなく名前（現場で探しやすい）
     df = df.sort_values(by=["product_name"], ascending=True)
