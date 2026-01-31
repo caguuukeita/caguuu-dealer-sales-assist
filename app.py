@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components  # ★この1行を追加
 
 APP_TITLE = "CAGUUU 接客サポート"
 
@@ -198,18 +199,32 @@ def render_category_switch(categories: list[str]):
         if cat == st.session_state.selected_category:
             label = f"✅ {label}"
 
-        if cols[i].button(label, key=f"cat_btn_{cat}"):
+            if cols[i].button(label, key=f"cat_btn_{cat}"):
             st.session_state.selected_category = cat
             st.session_state.selected_product_idx = None
-
+            
+            # ▼▼ JavaScriptで強制スクロールを実行 ▼▼
+            js_code = """
+            <script>
+                var element = window.parent.document.getElementById("product_list_top");
+                if (element) {
+                    element.scrollIntoView({behavior: "smooth", block: "start"});
+                }
+            </script>
+            """
+            components.html(js_code, height=0)
+            # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 def render_search_box():
     st.markdown("## 商品を探す（文字入力が面倒なら不要）")
     q = st.text_input("商品名・型番で検索", value="", placeholder="例：ソファ / TZ-001", label_visibility="visible")
     return q.strip()
 
 def render_product_grid(df: pd.DataFrame):
-    st.markdown("## 商品一覧（タップして詳細）")
+    # ▼▼ スクロールの目的地（目印）をここに設置 ▼▼
+    st.markdown('<div id="product_list_top"></div>', unsafe_allow_html=True)
+    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
+    st.markdown("## 商品一覧（タップして詳細）")
     if df.empty:
         st.info("該当する商品がありません。カテゴリや検索条件を変えてください。")
         return
@@ -219,11 +234,22 @@ def render_product_grid(df: pd.DataFrame):
         with st.container():
             st.markdown('<div class="cag-card">', unsafe_allow_html=True)
 
-            left, right = st.columns([1, 2], vertical_alignment="center")
+        left, right = st.columns([1, 2], vertical_alignment="center")
             with left:
-                st.image(row["image_url"], width=140, caption="", output_format="auto")
-            with right:
-                st.markdown(f"### {row['product_name']}")
+                # 画像URLのチェックとエラーハンドリング
+                img_url = str(row["image_url"]).strip()
+                
+                # URLが有効っぽい場合のみ表示（httpから始まり、nanやNoneではない）
+                if img_url and img_url.lower() not in ["nan", "none", ""] and img_url.startswith("http"):
+                    try:
+                        st.image(img_url, width=140, caption="", output_format="auto")
+                    except Exception:
+                        # 画像の読み込みに失敗したらダミーアイコンを表示
+                        st.markdown("📷<br><small>No Image</small>", unsafe_allow_html=True)
+                else:
+                    # そもそもURLがない場合
+                    st.markdown("📷<br><small>No Image</small>", unsafe_allow_html=True)
+            with right:                st.markdown(f"### {row['product_name']}")
                 
                 # バリエーションがある場合のみ表示
                 if row['variation_text'] and row['variation_text'].strip():
