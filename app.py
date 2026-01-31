@@ -223,9 +223,9 @@ def render_search_box():
 def render_product_grid(df: pd.DataFrame):
     # ▼▼ スクロールの目的地（目印）をここに設置 ▼▼
     st.markdown('<div id="product_list_top"></div>', unsafe_allow_html=True)
-    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+    
     st.markdown("## 商品一覧（タップして詳細）")
+
     if df.empty:
         st.info("該当する商品がありません。カテゴリや検索条件を変えてください。")
         return
@@ -235,32 +235,35 @@ def render_product_grid(df: pd.DataFrame):
         with st.container():
             st.markdown('<div class="cag-card">', unsafe_allow_html=True)
 
-        left, right = st.columns([1, 2], vertical_alignment="center")
+            left, right = st.columns([1, 2], vertical_alignment="center")
+            
+            # --- 画像表示エリア（エラー対策済み） ---
             with left:
-                # 画像URLのチェックとエラーハンドリング
                 img_url = str(row["image_url"]).strip()
-                
-                # URLが有効っぽい場合のみ表示（httpから始まり、nanやNoneではない）
+                # URLが有効(http〜)かつ、nan/noneではない場合のみ表示
                 if img_url and img_url.lower() not in ["nan", "none", ""] and img_url.startswith("http"):
                     try:
                         st.image(img_url, width=140, caption="", output_format="auto")
                     except Exception:
-                        # 画像の読み込みに失敗したらダミーアイコンを表示
+                        # 画像読み込み失敗時はダミー表示
                         st.markdown("📷<br><small>No Image</small>", unsafe_allow_html=True)
                 else:
-                    # そもそもURLがない場合
+                    # URL自体がない場合
                     st.markdown("📷<br><small>No Image</small>", unsafe_allow_html=True)
-            with right:                st.markdown(f"### {row['product_name']}")
+
+            # --- テキスト情報エリア ---
+            with right:
+                st.markdown(f"### {row['product_name']}")
                 
                 # バリエーションがある場合のみ表示
-                if row['variation_text'] and row['variation_text'].strip():
+                if row['variation_text'] and str(row['variation_text']).strip() not in ["nan", ""]:
                     st.markdown(f'<div class="cag-variation">{row["variation_text"]}</div>', unsafe_allow_html=True)
                 
                 # 商品コードを小さく表示
                 if row['product_code']:
                     st.caption(f"型番: {row['product_code']}")
 
-                st.markdown(f"**通常税込価格：{yen(int(row['price']))}**")
+                st.markdown(f"**価格：{yen(int(row['price']))}**")
             
             if st.button("詳細・トークを見る", key=f"detail_{idx}"):
                 st.session_state.selected_product_idx = idx
