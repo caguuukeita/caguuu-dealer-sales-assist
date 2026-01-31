@@ -199,11 +199,12 @@ def render_category_switch(categories: list[str]):
         if cat == st.session_state.selected_category:
             label = f"✅ {label}"
 
+        # ▼▼ ここからインデントに注意してください ▼▼
         if cols[i].button(label, key=f"cat_btn_{cat}"):
             st.session_state.selected_category = cat
             st.session_state.selected_product_idx = None
             
-            # ▼▼ JavaScriptで強制スクロールを実行 ▼▼
+            # 強制スクロール用のJavaScriptを実行
             js_code = """
             <script>
                 var element = window.parent.document.getElementById("product_list_top");
@@ -213,7 +214,7 @@ def render_category_switch(categories: list[str]):
             </script>
             """
             components.html(js_code, height=0)
-            # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
 def render_search_box():
     st.markdown("## 商品を探す（文字入力が面倒なら不要）")
     q = st.text_input("商品名・型番で検索", value="", placeholder="例：ソファ / TZ-001", label_visibility="visible")
