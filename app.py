@@ -1,6 +1,6 @@
 # app.py
 # 起動: streamlit run app.py
-# products.csv と同じフォルダに置いてください
+# 構成: app.py + products_kanetaya.csv (他店舗用CSVも同階層に配置)
 
 from __future__ import annotations
 
@@ -8,14 +8,42 @@ import pandas as pd
 import streamlit as st
 
 APP_TITLE = "CAGUUU 接客サポート"
-CSV_PATH = "products.csv"
+
+# ▼ 店舗設定: IDとファイル名の対応表
+# 命名規則: [企業名]_[拠点名]
+# ※CSVファイルは必ずUTF-8で保存してください
+STORE_MAPPING = {
+    # Default (既存URL用 & かねたや)
+    "kanetaya_makuhari": {
+        "file": "products_kanetaya.csv", 
+        "name": "かねたや 幕張新都心店"
+    },
+    
+    # Other Dealers
+    "kurita_shizuoka": {
+        "file": "products_kurita.csv", 
+        "name": "栗田家具センター 静岡店"
+    },
+    "offer9_main": {
+        "file": "products_offer9.csv", 
+        "name": "offer9"
+    },
+    "bigheart_main": {
+        "file": "products_bigheart.csv", 
+        "name": "大川家具 ビッグハート"
+    },
+    "mazaar_main": {
+        "file": "products_mazaar.csv", 
+        "name": "LIFE STYLE SHOP MaZaar"
+    },
+}
 
 # ====== アクセシビリティ重視CSS（文字＆ボタンを強制的に大きく）======
 ACCESSIBLE_CSS = """
 <style>
 /* 全体フォントを大きく */
 html, body, [class*="css"]  {
-  font-size: 20px !important; /* 20px以上 */
+  font-size: 20px !important;
 }
 
 /* 見出しを大きく */
@@ -101,8 +129,19 @@ CATEGORY_EMOJI = {
     "デスク": "💻",
     "その他": "🎲",
     "照明": "💡",
-
 }
+
+def get_store_info():
+    """URLパラメータから店舗情報を取得する。指定なしならデフォルト（かねたや）を返す"""
+    query_params = st.query_params
+    # パラメータ ?store=xxx を取得。なければデフォルト設定へ
+    store_id = query_params.get("store", "kanetaya_makuhari")
+    
+    # 未知のIDならデフォルトへ戻す（エラー回避）
+    if store_id not in STORE_MAPPING:
+        return STORE_MAPPING["kanetaya_makuhari"]
+        
+    return STORE_MAPPING[store_id]
 
 def load_products(csv_path: str) -> pd.DataFrame:
     # product_code を明示的に文字列として読み込む
@@ -122,10 +161,9 @@ def load_products(csv_path: str) -> pd.DataFrame:
 
     # 欠損値埋めリストにも product_code を追加
     for col in ["category", "product_name", "variation_text", "sales_point", "product_code", "ec_url", "image_url"]:
-        # 列が存在しない場合は空文字で作成
         if col not in df.columns:
             df[col] = ""
-        # 【重要】列がある場合もない場合も、必ず文字列型に変換してNaNを消す
+        # 列がある場合もない場合も、必ず文字列型に変換してNaNを消す
         df[col] = df[col].fillna("").astype(str)
         
     return df
@@ -136,14 +174,19 @@ def yen(n: int) -> str:
 
 def init_state(categories: list[str]):
     if "selected_category" not in st.session_state:
-        st.session_state.selected_category = categories[0] if categories else "全て"
+        st.session_state.selected_category = categories[0] if categories else "全商品"
     if "selected_product_idx" not in st.session_state:
         st.session_state.selected_product_idx = None
 
-def render_header():
+def render_header(store_name: str):
     st.markdown(ACCESSIBLE_CSS, unsafe_allow_html=True)
     st.markdown(f"# {APP_TITLE}")
-    st.caption("※接客中に片手で操作できる、商品トーク表示＆EC誘導ツール")
+    
+    # かねたや（デフォルト）以外の場合、店舗名を表示して区別しやすくする
+    if store_name != "かねたや 幕張新都心店":
+        st.markdown(f"### 📍 {store_name} 様 専用ページ")
+    else:
+        st.caption("※接客中に片手で操作できる、商品トーク表示＆EC誘導ツール")
 
 def render_category_switch(categories: list[str]):
     st.markdown("## カテゴリ")
@@ -161,7 +204,7 @@ def render_category_switch(categories: list[str]):
 
 def render_search_box():
     st.markdown("## 商品を探す（文字入力が面倒なら不要）")
-    q = st.text_input("商品名で検索", value="", placeholder="例：ソファ / ベッド / 昇降", label_visibility="visible")
+    q = st.text_input("商品名・型番で検索", value="", placeholder="例：ソファ / TZ-001", label_visibility="visible")
     return q.strip()
 
 def render_product_grid(df: pd.DataFrame):
@@ -191,6 +234,7 @@ def render_product_grid(df: pd.DataFrame):
                     st.caption(f"型番: {row['product_code']}")
 
                 st.markdown(f"**通常税込価格：{yen(int(row['price']))}**")
+            
             if st.button("詳細・トークを見る", key=f"detail_{idx}"):
                 st.session_state.selected_product_idx = idx
 
@@ -203,7 +247,7 @@ def render_product_grid(df: pd.DataFrame):
 def render_detail_view(row: pd.Series):
     # sales_point を最優先（H3で強調）
     st.markdown("### セールスポイント（接客トーク）")
-    # 赤字＋太字で視認性UP
+    # 赤字＋太字で視認性UP (\n を改行タグに変換)
     points = row["sales_point"].replace("\\n", "<br>").replace("\n", "<br>")
     st.markdown(f'<div class="cag-sales">{points}</div>', unsafe_allow_html=True)
 
@@ -221,13 +265,18 @@ def render_detail_view(row: pd.Series):
 def main():
     st.set_page_config(page_title=APP_TITLE, layout="wide")
 
-    render_header()
+    # 店舗情報の取得
+    store_info = get_store_info()
+    csv_file = store_info["file"]
+    store_name = store_info["name"]
+
+    render_header(store_name)
 
     # CSV読み込み
     try:
-        df_all = load_products(CSV_PATH)
+        df_all = load_products(csv_file)
     except FileNotFoundError:
-        st.error(f"'{CSV_PATH}' が見つかりません。先に data_generator.py を実行して products.csv を作成してください。")
+        st.error(f"データファイル '{csv_file}' が見つかりません。GitHubにアップロードしてください。")
         st.stop()
     except Exception as e:
         st.error(f"CSVの読み込みに失敗しました: {e}")
@@ -254,7 +303,7 @@ def main():
     if categories:
         render_category_switch(categories)
     else:
-        st.warning("category が見つかりません（products.csv を確認してください）。")
+        st.warning("category が見つかりません（CSVデータを確認してください）。")
 
     # 検索（任意）
     query = render_search_box()
@@ -269,7 +318,8 @@ def main():
             df["product_name"].str.contains(query, case=False, na=False) | 
             df["product_code"].str.contains(query, case=False, na=False)
         )
-        df = df[mask]        # ユーザーに分かりやすくメッセージを出す
+        df = df[mask]
+        # ユーザーに分かりやすくメッセージを出す
         if not df.empty:
             st.success(f"全カテゴリから 「{query}」 を検索しました")
             
