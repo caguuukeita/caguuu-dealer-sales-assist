@@ -199,7 +199,7 @@ def render_category_switch(categories: list[str]):
         if cat == st.session_state.selected_category:
             label = f"✅ {label}"
 
-            if cols[i].button(label, key=f"cat_btn_{cat}"):
+        if cols[i].button(label, key=f"cat_btn_{cat}"):
             st.session_state.selected_category = cat
             st.session_state.selected_product_idx = None
             
