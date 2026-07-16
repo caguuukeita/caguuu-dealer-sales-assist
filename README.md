@@ -13,8 +13,6 @@
 
 - **[app.py](file:///Users/keita.ito/Work-CAGUUU/2_Areas/caguuu_dealer_app/app.py)**  
   Streamlitで構築された接客サポートアプリのメインプログラムです。
-- **[data_generator.py](file:///Users/keita.ito/Work-CAGUUU/2_Areas/caguuu_dealer_app/data_generator.py)**  
-  アプリで表示するためのデモ用の商品データ（`products.csv`）を生成するスクリプトです。
 - **[products.csv](file:///Users/keita.ito/Work-CAGUUU/2_Areas/caguuu_dealer_app/products.csv)**  
   アプリで読み込む商品データファイルです（`data_generator.py` を実行すると自動生成されます）。
 - **[requirements.txt](file:///Users/keita.ito/Work-CAGUUU/2_Areas/caguuu_dealer_app/requirements.txt)**  
